@@ -2,10 +2,6 @@ import { TZDate } from "@date-fns/tz";
 import { format } from 'date-fns';
 import { StationStatus } from "./Types/types.js";
 
-const StationStatusesInfo = {
-  0: ''
-}
-
 interface StationConstructor {
   wirePower?: number;
   batterySOC?: number;
@@ -29,7 +25,7 @@ class Station {
   }
 
   public getInfo(): string {
-    return `${this.status === StationStatus.noGrid ? '🏙' : '🌇'} Статус: ${this.status}\n${this.batterySOC > 20 ? `🔋` : `🪫`} Заряд батареї: ${this.batterySOC}%\n⌚ Оновлено: ${format(new TZDate(this.lastUpdateTime * 1000, 'Europe/Kyiv'), 'dd.MM.yyyy HH:mm')}`;
+    return `${this.status === StationStatus.noGrid ? '🔴' : '🟢'} <b>Статус:</b> ${this.status}\n${this.batterySOC > 20 ? `🔋` : `🪫`} <b>Заряд батареї:</b> ${this.batterySOC}%\n⌚ <b>Оновлено:</b> ${format(new TZDate(this.lastUpdateTime * 1000, 'Europe/Kyiv'), 'dd.MM.yyyy HH:mm')}`;
   }
 
   public updateStation(params: RefreshStationParams): void {

@@ -27,7 +27,7 @@ bot.on('message', async (msg) => {
     return;
   }
 
-  await bot.sendMessage(msg.chat.id, `Невідома команда!`, { parse_mode: "HTML", reply_markup: { keyboard: [[{ text: statusBtnText }]], resize_keyboard: true } });
+  await bot.sendMessage(msg.chat.id, `❌ Невідома команда!`, { parse_mode: "HTML", reply_markup: { keyboard: [[{ text: statusBtnText }]], resize_keyboard: true } });
   return;
 });
 
