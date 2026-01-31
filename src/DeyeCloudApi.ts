@@ -1,6 +1,6 @@
 import axios, { Axios } from "axios";
 import crypto from 'crypto';
-import { GetStationDataResponse, GetStationListResponse, RefreshAccessTokenResponse } from './Types/types.js';
+import { GetStationDataResponse, RefreshAccessTokenResponse } from './Types/types.js';
 
 interface DeyeCloudApiConstructor {
   baseUrl: string;
@@ -31,16 +31,11 @@ class DeyeCloudApi {
     this.stationId = params.stationId;
   }
 
-  public async getStationData() {
+  public async getStationData(): Promise<GetStationDataResponse> {
     const res = await this.axiosInstance.post<GetStationDataResponse>(`/station/latest`, {
       stationId: this.stationId
     }, { headers: { "authorization": `bearer ${this.accessToken}` } });
-    console.log(res.data);
-  }
-
-  public async getStationList() {
-    const res = await this.axiosInstance.post<GetStationListResponse>(`/station/list`, {}, { headers: { "authorization": `bearer ${this.accessToken}` } });
-    console.log(res.data);
+    return res.data;
   }
 
   private async refreshAccessToken(): Promise<void> {

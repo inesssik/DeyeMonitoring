@@ -53,3 +53,9 @@ export type GetStationListResponse = {
     ownerName: string;
   }[];
 }
+
+export enum StationStatus {
+  undefined = 'Невідомо',
+  noGrid = 'Від Батарейки',
+  withGrid = 'Від Мережі'
+}

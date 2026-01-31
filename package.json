@@ -13,8 +13,11 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "@date-fns/tz": "github:date-fns/tz",
     "axios": "^1.13.4",
-    "dotenv": "^17.2.3"
+    "date-fns": "^4.1.0",
+    "dotenv": "^17.2.3",
+    "node-telegram-bot-api": "^0.67.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
