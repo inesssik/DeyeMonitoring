@@ -50,7 +50,7 @@ class Station {
   }
 
   public initAutoRefreshing(ms: number): Promise<void> {
-    setInterval(this.refreshStation, ms);
+    setInterval(() => this.refreshStation(), ms);
     return;
   }
 
@@ -66,3 +66,4 @@ class Station {
 }
 
 export default Station;
+
