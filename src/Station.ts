@@ -4,6 +4,7 @@ import { StationStatus } from "./Types/types.js";
 import DeyeCloudApi from "./DeyeCloudApi.js";
 
 interface StationConstructor {
+  deyeCloudApi: DeyeCloudApi;
   wirePower?: number;
   batterySOC?: number;
   lastUpdateTime?: number;
@@ -16,17 +17,21 @@ interface RefreshStationParams {
 }
 
 class Station {
+  private readonly deyeCloudApi: DeyeCloudApi;
+
   private wirePower: number = 0;
   private batterySOC: number;
   private lastUpdateTime: number;
   private status: StationStatus = StationStatus.undefined;
 
   constructor(params: StationConstructor) {
+    this.deyeCloudApi = params.deyeCloudApi;
     this.updateStation(params);
   }
 
   public getInfo(): string {
-    return `${this.status === StationStatus.noGrid ? '🔴' : '🟢'} <b>Статус:</b> ${this.status}\n${this.batterySOC > 20 ? `🔋` : `🪫`} <b>Заряд батареї:</b> ${this.batterySOC}%\n⌚ <b>Оновлено:</b> ${format(new TZDate(this.lastUpdateTime * 1000, 'Europe/Kyiv'), 'dd.MM.yyyy HH:mm')}`;
+    const formatedTime = format(new TZDate(this.lastUpdateTime * 1000, 'Europe/Kyiv'), 'dd.MM.yyyy HH:mm');
+    return `${this.status === StationStatus.noGrid ? '🔴' : '🟢'} <b>Статус:</b> ${this.status}\n${this.batterySOC > 20 ? `🔋` : `🪫`} <b>Заряд батареї:</b> ${this.batterySOC}%\n⌚ <b>Оновлено:</b> ${formatedTime}`;
   }
 
   private updateStation(params: RefreshStationParams): void {
@@ -37,19 +42,19 @@ class Station {
     return;
   }
 
-  public async refreshStation(deyeCloudApi: DeyeCloudApi): Promise<void> {
+  public async refreshStation(): Promise<void> {
     console.log(`Updating station data...`);
-    const stationData = await deyeCloudApi.getStationData();
+    const stationData = await this.deyeCloudApi.getStationData();
     this.updateStation({ batterySOC: stationData.batterySOC, lastUpdateTime: stationData.lastUpdateTime, wirePower: stationData.wirePower });
     return;
   }
 
-  public initAutoRefreshing(params: { deyeCloudApi: DeyeCloudApi, ms: number }): Promise<void> {
-    setInterval(async () => this.refreshStation(params.deyeCloudApi), params.ms);
+  public initAutoRefreshing(ms: number): Promise<void> {
+    setInterval(this.refreshStation, ms);
     return;
   }
 
-  private refreshStatus() {
+  private refreshStatus(): Promise<void> {
     if (this.wirePower === 0) {
       this.status = StationStatus.noGrid;
     } else {

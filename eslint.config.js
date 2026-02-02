@@ -13,7 +13,8 @@ export default [
     rules: {
       "@typescript-eslint/no-unused-vars": "warn",
       "@typescript-eslint/no-explicit-any": "off",
-      "semi": "warn"
+      "semi": "warn",
+      "@typescript-eslint/explicit-function-return-type": "error"
     }
   }
 ];

@@ -14,9 +14,9 @@ const deyeCloudApi = new DeyeCloudApi({
 });
 await deyeCloudApi.init();
 
-const station = new Station({});
-await station.refreshStation(deyeCloudApi);
-station.initAutoRefreshing({ deyeCloudApi, ms: 60000 });
+const station = new Station({ deyeCloudApi });
+station.initAutoRefreshing(60000);
+await station.refreshStation();
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const bot = new Bot({

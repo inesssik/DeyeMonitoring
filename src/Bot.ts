@@ -30,7 +30,7 @@ class Bot {
     return await this.tgBot.sendMessage(chatId, text, { parse_mode: "HTML", reply_markup: { keyboard: this.keyboard, resize_keyboard: true, ...options } });
   }
 
-  private initHandlers() {
+  private initHandlers(): void {
     this.tgBot.on('message', async (msg) => {
       const text = msg.text;
       const chatId = msg.chat.id;
