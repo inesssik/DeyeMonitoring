@@ -11,7 +11,7 @@ class SubscribesManager {
     params.database = this.database;
   }
 
-
+  setStatus
 }
 
 export default SubscribesManager;

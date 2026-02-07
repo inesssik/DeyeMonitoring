@@ -9,11 +9,13 @@ interface DeyeCloudApiConstructor {
   email: string;
   password: string;
   accessToken?: string;
+  accessTokenExpiresInMs?: number;
   stationId: string;
 }
 
 class DeyeCloudApi {
   private accessToken: string;
+  private accessTokenExpiresInMs: number;
   private axiosInstance: Axios;
   private appId: string;
   private appSecret: string;
@@ -23,6 +25,7 @@ class DeyeCloudApi {
 
   constructor(params: DeyeCloudApiConstructor) {
     this.accessToken = params.accessToken;
+    this.accessTokenExpiresInMs = params.accessTokenExpiresInMs ?? 0;
     this.appId = params.appId;
     this.appSecret = params.appSecret;
     this.email = params.email;
@@ -31,10 +34,22 @@ class DeyeCloudApi {
     this.stationId = params.stationId;
   }
 
+  private initInterceptors(): void {
+    this.axiosInstance.interceptors.request.use(async (config) => {
+      if (Date.now() > this.accessTokenExpiresInMs) {
+        await this.refreshAccessToken();
+      };
+
+      if (this.accessToken) {
+        config.headers.Authorization = `bearer ${this.accessToken}`;
+      };
+
+      return config;
+    }, (error) => Promise.reject(error));
+  }
+
   public async getStationData(): Promise<GetStationDataResponse> {
-    const res = await this.axiosInstance.post<GetStationDataResponse>(`/station/latest`, {
-      stationId: this.stationId
-    }, { headers: { "authorization": `bearer ${this.accessToken}` } });
+    const res = await this.axiosInstance.post<GetStationDataResponse>(`/station/latest`, { stationId: this.stationId });
     return res.data;
   }
 
@@ -45,13 +60,15 @@ class DeyeCloudApi {
       email: this.email,
       password: sha256password,
     });
-
+    
     if (!res.data?.accessToken) throw new Error('Access Token can`t be obtained');
+    this.accessTokenExpiresInMs = Date.now() + (+res.data.expiresIn * 1000);
     this.accessToken = res.data.accessToken;
     return;
   }
 
   public async init(): Promise<void> {
+    this.initInterceptors();
     if (!this.accessToken) await this.refreshAccessToken();
     return;
   }
