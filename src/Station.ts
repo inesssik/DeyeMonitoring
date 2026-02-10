@@ -43,10 +43,19 @@ class Station {
   }
 
   public async refreshStation(): Promise<void> {
-    console.log(`Updating station data...`);
-    const stationData = await this.deyeCloudApi.getStationData();
-    this.updateStation({ batterySOC: stationData.batterySOC, lastUpdateTime: stationData.lastUpdateTime, wirePower: stationData.wirePower });
-    return;
+    try {
+      console.log(`Updating station data...`);
+      const stationData = await this.deyeCloudApi.getStationData();
+
+      this.updateStation({
+        batterySOC: stationData.batterySOC,
+        lastUpdateTime: stationData.lastUpdateTime,
+        wirePower: stationData.wirePower
+      });
+      return;
+    } catch (error) {
+      console.log((error as Error).message);
+    }
   }
 
   public initAutoRefreshing(ms: number): Promise<void> {

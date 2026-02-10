@@ -9,6 +9,14 @@ export type RefreshAccessTokenResponse = {
   uid: number
 }
 
+export interface ISubscription {
+  subscribeId: number;
+  clientId: string;
+  status: boolean;
+  typeId: number;
+  subscribeName: string;
+}
+
 export type GetStationDataResponse = {
   code: string;
   msg: string;

@@ -36,7 +36,7 @@ class DeyeCloudApi {
 
   private initInterceptors(): void {
     this.axiosInstance.interceptors.request.use(async (config) => {
-      if (Date.now() > this.accessTokenExpiresInMs) {
+      if (!this.accessToken || Date.now() > this.accessTokenExpiresInMs) {
         await this.refreshAccessToken();
       };
 
@@ -69,7 +69,6 @@ class DeyeCloudApi {
 
   public async init(): Promise<void> {
     this.initInterceptors();
-    if (!this.accessToken) await this.refreshAccessToken();
     return;
   }
 }

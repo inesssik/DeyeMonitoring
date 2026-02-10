@@ -2,6 +2,7 @@ import Database from "./DatabasePool.js";
 
 interface SubscribesManagerConstructor {
   database: Database;
+  userSubscribes: Map<string, Record<number, true>>
 }
 
 class SubscribesManager {
