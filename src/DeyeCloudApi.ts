@@ -36,9 +36,15 @@ class DeyeCloudApi {
 
   private initInterceptors(): void {
     this.axiosInstance.interceptors.request.use(async (config) => {
-      if (!this.accessToken || Date.now() > this.accessTokenExpiresInMs) {
+      if (config.url.includes('/account/token')) {
+        return config;
+      }
+
+      const isTokenExpired = Date.now() > (this.accessTokenExpiresInMs - 10000);
+
+      if (!this.accessToken || isTokenExpired) {
         await this.refreshAccessToken();
-      };
+      }
 
       if (this.accessToken) {
         config.headers.Authorization = `bearer ${this.accessToken}`;
@@ -60,7 +66,11 @@ class DeyeCloudApi {
       email: this.email,
       password: sha256password,
     });
-    
+
+    console.log(res.headers);
+    console.log(res.config);
+    console.log(res.data);
+
     if (!res.data?.accessToken) throw new Error('Access Token can`t be obtained');
     this.accessTokenExpiresInMs = Date.now() + (+res.data.expiresIn * 1000);
     this.accessToken = res.data.accessToken;

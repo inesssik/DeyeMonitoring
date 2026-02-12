@@ -46,7 +46,6 @@ class Station {
     try {
       console.log(`Updating station data...`);
       const stationData = await this.deyeCloudApi.getStationData();
-
       this.updateStation({
         batterySOC: stationData.batterySOC,
         lastUpdateTime: stationData.lastUpdateTime,

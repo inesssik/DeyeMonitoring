@@ -1,5 +1,7 @@
 import TelegramBot, { KeyboardButton } from 'node-telegram-bot-api';
 import Station from './Station.js';
+import SubscribesManager from './SubscribesManager.js';
+import { SubscribeType } from './Types/types.js';
 
 interface BotConstructor {
   tgBot: TelegramBot;
@@ -9,6 +11,7 @@ interface BotConstructor {
 class Bot {
   private readonly tgBot: TelegramBot;
   private readonly station: Station;
+  private readonly subscribesManager: SubscribesManager;
   private readonly buttons = {
     START: { text: `/start` },
     STATUS: { text: `🔋 Статус` },
@@ -33,6 +36,7 @@ class Bot {
   private initHandlers(): void {
     this.tgBot.on('message', async (msg) => {
       const text = msg.text;
+      const clientId = msg.from.id;
       const chatId = msg.chat.id;
 
       switch (text) {
@@ -45,12 +49,22 @@ class Bot {
           break;
 
         case this.buttons.SUBSCRIBE_LIGHT.text:
-          await this.sendMessageWithKeyboard(chatId, this.station.getInfo());
-          break;
+          {
+            const clientSubscribes = await this.subscribesManager.getClientSubscribes(clientId.toString());
+            const statusSwitchedTo = await clientSubscribes.get(SubscribeType.LIGHT).switchStatus();
+            const textToSend = `Ви ${statusSwitchedTo ? 'підписались на' : 'відписались від'} ${this.buttons.SUBSCRIBE_LIGHT.text}`;
+            await this.sendMessageWithKeyboard(chatId, textToSend);
+            break;
+          }
 
         case this.buttons.SUBSCRIBE_STATUS.text:
-          await this.sendMessageWithKeyboard(chatId, this.station.getInfo());
-          break;
+          {
+            const clientSubscribes = await this.subscribesManager.getClientSubscribes(clientId.toString());
+            const statusSwitchedTo = await clientSubscribes.get(SubscribeType.STATUS).switchStatus();
+            const textToSend = `Ви ${statusSwitchedTo ? 'підписались на' : 'відписались від'} ${this.buttons.SUBSCRIBE_STATUS.text}`;
+            await this.sendMessageWithKeyboard(chatId, textToSend);
+            break;
+          }
 
         default:
           await this.sendMessageWithKeyboard(chatId, `❌ Невідома команда!`);

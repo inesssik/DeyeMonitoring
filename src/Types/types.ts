@@ -67,3 +67,8 @@ export enum StationStatus {
   noGrid = 'Від Батарейки',
   withGrid = 'Від Мережі'
 }
+
+export enum SubscribeType {
+  LIGHT,
+  STATUS
+}

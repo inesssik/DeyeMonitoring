@@ -34,7 +34,7 @@ class Database {
     }
   }
 
-  public async insertUpdateSubscribe(clientId: number | bigint, subscribeType: number, status: boolean): Promise<void> {
+  public async insertUpdateSubscribe(clientId: string, subscribeType: number, status: boolean): Promise<void> {
     if (!this.pool) throw new Error('Pool not initialized');
 
     try {
@@ -53,7 +53,7 @@ class Database {
     }
   }
 
-  public async getUserSubscriptions(clientId: number | bigint): Promise<ISubscription[]> {
+  public async getUserSubscriptions(clientId: string): Promise<ISubscription[]> {
     if (!this.pool) throw new Error('Pool not initialized');
 
     try {
