@@ -15,6 +15,7 @@ const configSchema = z.object({
   STATION_ID: z.string(),
   BOT_TOKEN: z.string(),
   REFRESH_INTERVAL_MS: z.coerce.number().default(60000),
+  LOW_BATTERY_THRESHOLD: z.coerce.number().default(20)
 });
 
 @singleton()

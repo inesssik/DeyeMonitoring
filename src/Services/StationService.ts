@@ -1,4 +1,5 @@
 import { StationStatus } from "../Types/types.js";
+import { ConfigService } from "./ConfigService.js";
 import { DeyeCloudApiService } from "./DeyeCloudApiService.js";
 import { EventEmitter } from 'events';
 import { singleton } from "tsyringe";
@@ -31,7 +32,8 @@ export class StationService extends EventEmitter {
   private prevBatterySOC: number = 0;
 
   constructor(
-    private readonly deyeCloudApiService: DeyeCloudApiService
+    private readonly deyeCloudApiService: DeyeCloudApiService,
+    private readonly configService: ConfigService
   ) {
     super();
   }
@@ -39,7 +41,7 @@ export class StationService extends EventEmitter {
   public getInfo(): string {
     const formatedTime = formatDateWithTimezone(this.lastUpdateTime);
     const statusIcon = this.status === StationStatus.undefined ? '⚪' : (this.status === StationStatus.noGrid ? '🔴' : '🟢');
-    return `${statusIcon} <b>Статус:</b> ${this.status}\n${this.batterySOC > 20 ? `🔋` : `🪫`} <b>Заряд батареї:</b> ${this.batterySOC}%\n⌚ <b>Оновлено:</b> ${formatedTime}`;
+    return `${statusIcon} <b>Статус:</b> ${this.status}\n${this.batterySOC > this.configService.values.LOW_BATTERY_THRESHOLD ? `🔋` : `🪫`} <b>Заряд батареї:</b> ${this.batterySOC}%\n⌚ <b>Оновлено:</b> ${formatedTime}`;
   }
 
   private checkAndEmitEvents(): void {
