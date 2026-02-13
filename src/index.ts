@@ -1,27 +1,27 @@
 import 'reflect-metadata';
-import { DeyeCloudApi } from "./DeyeCloudApi.js";
-import { Station } from './Station.js';
-import { Bot } from './Bot.js';
-import { Database } from './Database.js';
-import { NotificationService } from './NotificationService.js';
+import { DeyeCloudApiService } from "./Services/DeyeCloudApiService.js";
+import { StationService } from './Services/StationService.js';
+import { NotificationService } from './Services/NotificationService.js';
 import { container } from 'tsyringe';
-import { ConfigService } from './ConfigService.js';
+import { ConfigService } from './Services/ConfigService.js';
+import { BotService } from './Services/BotService.js';
+import { DatabaseService } from './Services/DatabaseService.js';
 
 (async (): Promise<void> => {
   const config = container.resolve(ConfigService);
 
-  const db = container.resolve(Database);
+  const db = container.resolve(DatabaseService);
   await db.initPool();
 
-  const api = container.resolve(DeyeCloudApi);
+  const api = container.resolve(DeyeCloudApiService);
   await api.init();
 
-  const station = container.resolve(Station);
+  const station = container.resolve(StationService);
   await station.refreshStation();
   station.initAutoRefreshing(config.values.REFRESH_INTERVAL_MS);
 
   container.resolve(NotificationService);
-  container.resolve(Bot);
+  container.resolve(BotService);
 
   console.log(`Script has been started...`);
 })();

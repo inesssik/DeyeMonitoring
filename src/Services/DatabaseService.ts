@@ -1,10 +1,10 @@
 import sql from 'mssql';
-import { ISubscription } from './Types/types.js';
+import { ISubscription } from '../Types/types.js';
 import { singleton } from 'tsyringe';
 import { ConfigService } from './ConfigService.js';
 
 @singleton()
-export class Database {
+export class DatabaseService {
   private pool: sql.ConnectionPool;
 
   constructor(

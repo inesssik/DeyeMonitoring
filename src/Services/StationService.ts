@@ -1,5 +1,5 @@
-import { StationStatus } from "./Types/types.js";
-import { DeyeCloudApi } from "./DeyeCloudApi.js";
+import { StationStatus } from "../Types/types.js";
+import { DeyeCloudApiService } from "./DeyeCloudApiService.js";
 import { EventEmitter } from 'events';
 import { singleton } from "tsyringe";
 
@@ -21,7 +21,7 @@ interface RefreshStationParams {
 }
 
 @singleton()
-export class Station extends EventEmitter {
+export class StationService extends EventEmitter {
   private wirePower: number = 0;
   private batterySOC: number;
   private lastUpdateTime: number;
@@ -31,7 +31,7 @@ export class Station extends EventEmitter {
   private prevBatterySOC: number = 0;
 
   constructor(
-    private readonly deyeCloudApi: DeyeCloudApi
+    private readonly deyeCloudApiService: DeyeCloudApiService
   ) {
     super();
   }
@@ -71,7 +71,7 @@ export class Station extends EventEmitter {
   public async refreshStation(): Promise<void> {
     try {
       console.log(`Updating station data...`);
-      const stationData = await this.deyeCloudApi.getStationData();
+      const stationData = await this.deyeCloudApiService.getStationData();
       this.updateStation({
         batterySOC: stationData.batterySOC,
         lastUpdateTime: stationData.lastUpdateTime,

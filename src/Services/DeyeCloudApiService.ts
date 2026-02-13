@@ -2,10 +2,10 @@ import { singleton } from "tsyringe";
 import axios, { AxiosInstance } from "axios";
 import crypto from 'crypto';
 import { ConfigService } from "./ConfigService.js";
-import { GetStationDataResponse, RefreshAccessTokenResponse } from './Types/types.js';
+import { GetStationDataResponse, RefreshAccessTokenResponse } from '../Types/types.js';
 
 @singleton()
-export class DeyeCloudApi {
+export class DeyeCloudApiService {
   private accessToken?: string;
   private expiresAt: number = 0;
   private axiosInstance: AxiosInstance;

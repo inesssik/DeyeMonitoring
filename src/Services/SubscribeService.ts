@@ -1,20 +1,20 @@
-import { Database } from "./Database.js";
-import { ClientSubscribe } from "./ClientSubscribe.js";
-import { SubscribeType } from "./Types/types.js";
+import { DatabaseService } from "./DatabaseService.js";
+import { ClientSubscribe } from "../Entities/ClientSubscribe.js";
+import { SubscribeType } from "../Types/types.js";
 import { singleton } from "tsyringe";
 
 @singleton()
 export class SubscribeService {
   constructor(
-    private readonly database: Database
+    private readonly databaseService: DatabaseService
   ) { }
 
   public async getSubscribers(typeId: SubscribeType): Promise<string[]> {
-    return await this.database.getSubscribedClientsByType(typeId);
+    return await this.databaseService.getSubscribedClientsByType(typeId);
   }
 
   public async getClientSubscribes(clientId: string): Promise<ClientSubscribe[]> {
-    const dbUserSubscriptions = await this.database.getUserSubscriptions(clientId);
+    const dbUserSubscriptions = await this.databaseService.getUserSubscriptions(clientId);
 
     return dbUserSubscriptions.map(dbSub => new ClientSubscribe({
       clientId,
@@ -31,7 +31,7 @@ export class SubscribeService {
     const currentStatus = targetSubscription ? targetSubscription.status : false;
     const newStatus = !currentStatus;
 
-    await this.database.insertUpdateSubscribe(clientId, typeId, newStatus);
+    await this.databaseService.insertUpdateSubscribe(clientId, typeId, newStatus);
 
     return newStatus;
   }

@@ -1,16 +1,16 @@
 import TelegramBot, { KeyboardButton, Message } from 'node-telegram-bot-api';
-import { Station } from './Station.js';
+import { StationService } from './StationService.js';
 import { SubscribeService } from './SubscribeService.js';
-import { SubscribeType } from './Types/types.js';
-import { Database } from './Database.js';
-import { BUTTON_TEXTS, MESSAGES } from './Constants/constants.js';
+import { SubscribeType } from '../Types/types.js';
+import { DatabaseService } from './DatabaseService.js';
+import { BUTTON_TEXTS, MESSAGES } from '../Constants/constants.js';
 import { singleton } from 'tsyringe';
 import { ConfigService } from './ConfigService.js';
 
 type CommandHandler = (msg: Message) => Promise<void>;
 
 @singleton()
-export class Bot {
+export class BotService {
   private readonly tgBot: TelegramBot;
 
   private readonly buttons = {
@@ -28,8 +28,8 @@ export class Bot {
   private handlers: Record<string, CommandHandler> = {};
 
   constructor(
-    private readonly station: Station,
-    private readonly database: Database,
+    private readonly stationService: StationService,
+    private readonly databaseService: DatabaseService,
     private readonly subscribeService: SubscribeService,
     private readonly configService: ConfigService
   ) {
@@ -52,11 +52,11 @@ export class Bot {
 
   private registerHandlers(): void {
     this.handlers[BUTTON_TEXTS.START] = async (msg): Promise<void> => {
-      await this.sendMessageWithKeyboard(msg.chat.id, this.station.getInfo());
+      await this.sendMessageWithKeyboard(msg.chat.id, this.stationService.getInfo());
     };
 
     this.handlers[BUTTON_TEXTS.STATUS] = async (msg): Promise<void> => {
-      await this.sendMessageWithKeyboard(msg.chat.id, this.station.getInfo());
+      await this.sendMessageWithKeyboard(msg.chat.id, this.stationService.getInfo());
     };
 
     this.handlers[BUTTON_TEXTS.SUBSCRIBE_LIGHT] = async (msg): Promise<void> => {
@@ -97,7 +97,7 @@ export class Bot {
       const chatId = msg.chat.id;
 
       try {
-        await this.database.insertUpdateUser(clientId, msg.from.username || '');
+        await this.databaseService.insertUpdateUser(clientId, msg.from.username || '');
       } catch (e) {
         console.error('Error updating user stats:', e);
       }

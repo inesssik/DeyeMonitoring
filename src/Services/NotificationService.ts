@@ -1,26 +1,26 @@
-import { Station } from "./Station.js";
-import { Bot } from "./Bot.js";
+import { StationService } from "./StationService.js";
+import { BotService } from "./BotService.js";
 import { SubscribeService } from "./SubscribeService.js";
-import { StationStatus, SubscribeType } from "./Types/types.js";
+import { StationStatus, SubscribeType } from "../Types/types.js";
 import { singleton } from "tsyringe";
 
 
 @singleton()
 export class NotificationService {
   constructor(
-    private readonly station: Station,
-    private readonly bot: Bot,
+    private readonly stationService: StationService,
+    private readonly botService: BotService,
     private readonly subscribeService: SubscribeService
   ) {
     this.initListeners();
   }
 
   private initListeners(): void {
-    this.station.on('statusChange', async (newStatus: StationStatus) => {
+    this.stationService.on('statusChange', async (newStatus: StationStatus) => {
       await this.handleStatusChange(newStatus);
     });
 
-    this.station.on('lowBattery', async (batteryLevel: number) => {
+    this.stationService.on('lowBattery', async (batteryLevel: number) => {
       await this.handleLowBattery(batteryLevel);
     });
 
@@ -44,7 +44,7 @@ export class NotificationService {
     console.log(`Broadcasting message for type ${type}...`);
     const subscribers = await this.subscribeService.getSubscribers(type);
 
-    const promises = subscribers.map(clientId => this.bot.sendNotification(clientId, message));
+    const promises = subscribers.map(clientId => this.botService.sendNotification(clientId, message));
     await Promise.all(promises);
 
     console.log(`Sent notifications to ${subscribers.length} users.`);
