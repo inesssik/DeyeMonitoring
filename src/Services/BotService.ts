@@ -3,7 +3,7 @@ import { StationService } from './StationService.js';
 import { SubscribeService } from './SubscribeService.js';
 import { SubscribeType } from '../Types/types.js';
 import { DatabaseService } from './DatabaseService.js';
-import { BUTTON_TEXTS, MESSAGES } from '../Constants/constants.js';
+import { BUTTON_TEXTS, MESSAGES, SUBSCRIBE_DESCRIPTIONS } from '../Constants/constants.js';
 import { singleton } from 'tsyringe';
 import { ConfigService } from './ConfigService.js';
 
@@ -83,7 +83,8 @@ export class BotService {
     const newStatus = await this.subscribeService.toggleSubscription(clientId, type);
 
     const prefix = newStatus ? MESSAGES.SUBSCRIBED : MESSAGES.UNSUBSCRIBED;
-    const textToSend = `${prefix} "${title}"`;
+
+    const textToSend = `${prefix} "<b>${title}</b>"\n<i>${SUBSCRIBE_DESCRIPTIONS[type]}</i>`;
 
     await this.sendMessageWithKeyboard(msg.chat.id, textToSend);
   }
