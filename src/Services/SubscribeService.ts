@@ -20,7 +20,7 @@ export class SubscribeService {
       clientId,
       status: dbSub.status,
       subscribeId: dbSub.subscribeId,
-      subscribeTypeId: dbSub.typeId,
+      subscribeTypeId: dbSub.subscribeType,
     }));
   }
 

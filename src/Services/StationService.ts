@@ -50,7 +50,7 @@ export class StationService extends EventEmitter {
       this.emit('statusChange', this.status);
     }
 
-    const LOW_BATTERY_THRESHOLD = 20;
+    const LOW_BATTERY_THRESHOLD = this.configService.values.LOW_BATTERY_THRESHOLD;
     if (this.prevBatterySOC > LOW_BATTERY_THRESHOLD && this.batterySOC <= LOW_BATTERY_THRESHOLD) {
       console.log(`Event: Low battery detected (${this.batterySOC}%)`);
       this.emit('lowBattery', this.batterySOC);
@@ -74,6 +74,7 @@ export class StationService extends EventEmitter {
     try {
       console.log(`Updating station data...`);
       const stationData = await this.deyeCloudApiService.getStationData();
+
       this.updateStation({
         batterySOC: stationData.batterySOC,
         lastUpdateTime: stationData.lastUpdateTime,

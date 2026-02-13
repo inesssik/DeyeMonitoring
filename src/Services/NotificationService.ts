@@ -36,7 +36,7 @@ export class NotificationService {
   }
 
   private async handleLowBattery(level: number): Promise<void> {
-    const message = `🪫 <b>Увага! Низький заряд батареї: ${level}%</b>\nПора економити енергію.`;
+    const message = `🪫 <b>Увага! Низький заряд батареї: ${level}%\n<i>Ліфт відключиться при 10%</i></b>`;
     await this.broadcast(SubscribeType.LOWBATTERY, message);
   }
 

@@ -88,7 +88,7 @@ export class DatabaseService {
       const query = `
         SELECT clientId 
         FROM dbo.Subscribes 
-        WHERE typeId = @subscribeType AND status = 1
+        WHERE subscribeType = @subscribeType AND status = 1
       `;
 
       const result = await request.query(query);
