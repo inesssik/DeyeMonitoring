@@ -4,28 +4,29 @@
   "description": "",
   "main": "eslint.config.js",
   "scripts": {
-    "start": "tsx src/index.ts",
-    "startDev": "tsc --noEmit && eslint . && tsx src/index.ts",
-    "dev": "nodemon -e ts,js,tsx --exec \"npm run parser\"",
-    "dsadas": "node index"
+    "start": "node --loader ts-node/esm src/index.ts",
+    "dev": "nodemon -e ts,js,tsx --exec \"npm start\""
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "module",
   "dependencies": {
-    "@date-fns/tz": "1.4.1",
     "axios": "^1.13.4",
-    "date-fns": "^4.1.0",
     "dotenv": "^17.2.3",
     "mssql": "^12.2.0",
-    "node-telegram-bot-api": "^0.67.0"
+    "node-telegram-bot-api": "^0.67.0",
+    "reflect-metadata": "^0.2.2",
+    "tsyringe": "^4.10.0",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
     "@types/mssql": "^9.1.9",
     "@types/node-telegram-bot-api": "^0.64.13",
     "eslint": "^9.39.2",
+    "nodemon": "^3.1.11",
+    "ts-node": "^10.9.2",
     "tsx": "^4.21.0",
     "typescript-eslint": "^8.54.0"
   }

@@ -1,80 +1,116 @@
-import TelegramBot, { KeyboardButton } from 'node-telegram-bot-api';
-import Station from './Station.js';
-import SubscribesManager from './SubscribesManager.js';
+import TelegramBot, { KeyboardButton, Message } from 'node-telegram-bot-api';
+import { Station } from './Station.js';
+import { SubscribeService } from './SubscribeService.js';
 import { SubscribeType } from './Types/types.js';
+import { Database } from './Database.js';
+import { BUTTON_TEXTS, MESSAGES } from './Constants/constants.js';
+import { singleton } from 'tsyringe';
+import { ConfigService } from './ConfigService.js';
 
-interface BotConstructor {
-  tgBot: TelegramBot;
-  station: Station;
-}
+type CommandHandler = (msg: Message) => Promise<void>;
 
-class Bot {
+@singleton()
+export class Bot {
   private readonly tgBot: TelegramBot;
-  private readonly station: Station;
-  private readonly subscribesManager: SubscribesManager;
+
   private readonly buttons = {
-    START: { text: `/start` },
-    STATUS: { text: `🔋 Статус` },
-    SUBSCRIBE_LIGHT: { text: `💡 Розсилка Світла` },
-    SUBSCRIBE_STATUS: { text: `🪫 Розсилка Статусу` }
+    START: { text: BUTTON_TEXTS.START },
+    STATUS: { text: BUTTON_TEXTS.STATUS },
+    SUBSCRIBE_LIGHT: { text: BUTTON_TEXTS.SUBSCRIBE_LIGHT },
+    SUBSCRIBE_LOWBATTERY: { text: BUTTON_TEXTS.SUBSCRIBE_LOWBATTERY }
   } satisfies Record<string, KeyboardButton>;
+
   private readonly keyboard = [
     [this.buttons.STATUS],
-    [this.buttons.SUBSCRIBE_LIGHT, this.buttons.SUBSCRIBE_STATUS]
+    [this.buttons.SUBSCRIBE_LIGHT, this.buttons.SUBSCRIBE_LOWBATTERY]
   ];
 
-  constructor(params: BotConstructor) {
-    this.tgBot = params.tgBot;
-    this.station = params.station;
-    this.initHandlers();
+  private handlers: Record<string, CommandHandler> = {};
+
+  constructor(
+    private readonly station: Station,
+    private readonly database: Database,
+    private readonly subscribeService: SubscribeService,
+    private readonly configService: ConfigService
+  ) {
+    this.tgBot = new TelegramBot(this.configService.values.BOT_TOKEN, { polling: true });
+
+    this.registerHandlers();
+    this.initListeners();
   }
 
   private async sendMessageWithKeyboard(chatId: TelegramBot.ChatId, text: string, options?: TelegramBot.SendMessageOptions): Promise<TelegramBot.Message> {
-    return await this.tgBot.sendMessage(chatId, text, { parse_mode: "HTML", reply_markup: { keyboard: this.keyboard, resize_keyboard: true, ...options } });
+    return await this.tgBot.sendMessage(chatId, text, {
+      parse_mode: "HTML",
+      reply_markup: {
+        keyboard: this.keyboard,
+        resize_keyboard: true,
+      },
+      ...options
+    });
   }
 
-  private initHandlers(): void {
+  private registerHandlers(): void {
+    this.handlers[BUTTON_TEXTS.START] = async (msg): Promise<void> => {
+      await this.sendMessageWithKeyboard(msg.chat.id, this.station.getInfo());
+    };
+
+    this.handlers[BUTTON_TEXTS.STATUS] = async (msg): Promise<void> => {
+      await this.sendMessageWithKeyboard(msg.chat.id, this.station.getInfo());
+    };
+
+    this.handlers[BUTTON_TEXTS.SUBSCRIBE_LIGHT] = async (msg): Promise<void> => {
+      await this.handleSubscriptionToggle(msg, SubscribeType.LIGHT, BUTTON_TEXTS.SUBSCRIBE_LIGHT);
+    };
+
+    this.handlers[BUTTON_TEXTS.SUBSCRIBE_LOWBATTERY] = async (msg): Promise<void> => {
+      await this.handleSubscriptionToggle(msg, SubscribeType.LOWBATTERY, BUTTON_TEXTS.SUBSCRIBE_LOWBATTERY);
+    };
+  }
+
+  public async sendNotification(chatId: string | number, text: string): Promise<void> {
+    try {
+      await this.sendMessageWithKeyboard(chatId, text);
+    } catch (error) {
+      console.error(`Failed to send notification to ${chatId}:`, (error as Error).message);
+    }
+  }
+
+  private async handleSubscriptionToggle(msg: Message, type: SubscribeType, title: string): Promise<void> {
+    const clientId = msg.from?.id.toString();
+    if (!clientId) return;
+
+    const newStatus = await this.subscribeService.toggleSubscription(clientId, type);
+
+    const prefix = newStatus ? MESSAGES.SUBSCRIBED : MESSAGES.UNSUBSCRIBED;
+    const textToSend = `${prefix} "${title}"`;
+
+    await this.sendMessageWithKeyboard(msg.chat.id, textToSend);
+  }
+
+  private initListeners(): void {
     this.tgBot.on('message', async (msg) => {
+      if (!msg.text || !msg.from) return;
+
       const text = msg.text;
       const clientId = msg.from.id;
       const chatId = msg.chat.id;
 
-      switch (text) {
-        case this.buttons.START.text:
-          await this.sendMessageWithKeyboard(chatId, this.station.getInfo());
-          break;
+      try {
+        await this.database.insertUpdateUser(clientId, msg.from.username || '');
+      } catch (e) {
+        console.error('Error updating user stats:', e);
+      }
 
-        case this.buttons.STATUS.text:
-          await this.sendMessageWithKeyboard(chatId, this.station.getInfo());
-          break;
+      const handler = this.handlers[text];
 
-        case this.buttons.SUBSCRIBE_LIGHT.text:
-          {
-            const clientSubscribes = await this.subscribesManager.getClientSubscribes(clientId.toString());
-            const statusSwitchedTo = await clientSubscribes.get(SubscribeType.LIGHT).switchStatus();
-            const textToSend = `Ви ${statusSwitchedTo ? 'підписались на' : 'відписались від'} ${this.buttons.SUBSCRIBE_LIGHT.text}`;
-            await this.sendMessageWithKeyboard(chatId, textToSend);
-            break;
-          }
-
-        case this.buttons.SUBSCRIBE_STATUS.text:
-          {
-            const clientSubscribes = await this.subscribesManager.getClientSubscribes(clientId.toString());
-            const statusSwitchedTo = await clientSubscribes.get(SubscribeType.STATUS).switchStatus();
-            const textToSend = `Ви ${statusSwitchedTo ? 'підписались на' : 'відписались від'} ${this.buttons.SUBSCRIBE_STATUS.text}`;
-            await this.sendMessageWithKeyboard(chatId, textToSend);
-            break;
-          }
-
-        default:
-          await this.sendMessageWithKeyboard(chatId, `❌ Невідома команда!`);
-          break;
+      if (handler) {
+        await handler(msg);
+      } else {
+        await this.sendMessageWithKeyboard(chatId, MESSAGES.UNKNOWN_COMMAND);
       }
     });
 
-    console.log(`Bot handlers has been started...`);
-    return;
+    console.log(MESSAGES.BOT_STARTED);
   }
 }
-
-export default Bot;

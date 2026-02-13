@@ -1,14 +1,25 @@
 import sql from 'mssql';
 import { ISubscription } from './Types/types.js';
+import { singleton } from 'tsyringe';
+import { ConfigService } from './ConfigService.js';
 
-class Database {
+@singleton()
+export class Database {
   private pool: sql.ConnectionPool;
 
-  constructor() { }
+  constructor(
+    private readonly configService: ConfigService
+  ) { }
 
-  public async initPool(sqlConfig: sql.config): Promise<void> {
+  public async initPool(): Promise<void> {
     try {
-      this.pool = await sql.connect(sqlConfig);
+      this.pool = await sql.connect({
+        server: this.configService.values.DB_SERVER,
+        user: this.configService.values.DB_USER,
+        password: this.configService.values.DB_PASSWORD,
+        database: this.configService.values.DB_DATABASE,
+        options: { trustServerCertificate: true }
+      });
       console.log('Connected to MSSQL');
     } catch (err) {
       console.error('Database connection failed:', err);
@@ -26,8 +37,6 @@ class Database {
       request.input('tgUsername', sql.VarChar, username);
 
       await request.execute('Clients_Upsert');
-
-      console.log(`User ${tgId} upserted successfully.`);
     } catch (err) {
       console.error('Error upserting user:', err);
       throw err;
@@ -68,6 +77,26 @@ class Database {
       throw err;
     }
   }
-}
 
-export default Database;
+  public async getSubscribedClientsByType(subscribeType: number): Promise<string[]> {
+    if (!this.pool) throw new Error('Pool not initialized');
+
+    try {
+      const request = this.pool.request();
+      request.input('subscribeType', sql.Int, subscribeType);
+
+      const query = `
+        SELECT clientId 
+        FROM dbo.Subscribes 
+        WHERE typeId = @subscribeType AND status = 1
+      `;
+
+      const result = await request.query(query);
+
+      return result.recordset.map((row: any) => row.clientId.toString());
+    } catch (err) {
+      console.error('Error getting subscribed clients:', err);
+      return [];
+    }
+  }
+}

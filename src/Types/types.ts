@@ -1,7 +1,7 @@
 export type RefreshAccessTokenResponse = {
   code: string,
   msg: string,
-  success: false,
+  success: boolean,
   requestId: string,
   accessToken: string,
   expiresIn: string,
@@ -70,5 +70,5 @@ export enum StationStatus {
 
 export enum SubscribeType {
   LIGHT,
-  STATUS
+  LOWBATTERY
 }

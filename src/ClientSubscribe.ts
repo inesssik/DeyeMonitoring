@@ -1,5 +1,3 @@
-import Database from "./Database.js";
-
 interface ClientSubscribeConstructor {
   clientId: string;
   subscribeId: number;
@@ -7,12 +5,10 @@ interface ClientSubscribeConstructor {
   status: boolean;
 }
 
-class ClientSubscribe {
-  private readonly database: Database;
-
-  private clientId: string;
-  private subscribeId: number;
-  private subscribeTypeId: number;
+export class ClientSubscribe {
+  public readonly clientId: string;
+  public readonly subscribeId: number;
+  public readonly subscribeTypeId: number;
   public status: boolean;
 
   constructor(params: ClientSubscribeConstructor) {
@@ -21,12 +17,4 @@ class ClientSubscribe {
     this.subscribeTypeId = params.subscribeTypeId;
     this.status = params.status ?? false;
   }
-
-  public async switchStatus(): Promise<boolean> {
-    await this.database.insertUpdateSubscribe(this.clientId, this.subscribeTypeId, !this.status);
-    this.status = !this.status;
-    return this.status;
-  }
 }
-
-export default ClientSubscribe;

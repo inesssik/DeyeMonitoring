@@ -1,14 +1,18 @@
-import { TZDate } from "@date-fns/tz";
-import { format } from 'date-fns';
 import { StationStatus } from "./Types/types.js";
-import DeyeCloudApi from "./DeyeCloudApi.js";
+import { DeyeCloudApi } from "./DeyeCloudApi.js";
+import { EventEmitter } from 'events';
+import { singleton } from "tsyringe";
 
-interface StationConstructor {
-  deyeCloudApi: DeyeCloudApi;
-  wirePower?: number;
-  batterySOC?: number;
-  lastUpdateTime?: number;
-}
+const formatDateWithTimezone = (timestamp: number): string => {
+  const date = new Date(timestamp * 1000);
+  const formatter = new Intl.DateTimeFormat('uk-UA', {
+    timeZone: 'Europe/Kyiv', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false
+  });
+
+  const parts = formatter.formatToParts(date);
+  const getPart = (type: string): string => parts.find(p => p.type === type)?.value || '';
+  return `${getPart('day')}.${getPart('month')}.${getPart('year')} ${getPart('hour')}:${getPart('minute')}`;
+};
 
 interface RefreshStationParams {
   wirePower?: number;
@@ -16,29 +20,51 @@ interface RefreshStationParams {
   lastUpdateTime?: number;
 }
 
-class Station {
-  private readonly deyeCloudApi: DeyeCloudApi;
-
+@singleton()
+export class Station extends EventEmitter {
   private wirePower: number = 0;
   private batterySOC: number;
   private lastUpdateTime: number;
   private status: StationStatus = StationStatus.undefined;
 
-  constructor(params: StationConstructor) {
-    this.deyeCloudApi = params.deyeCloudApi;
-    this.updateStation(params);
+  private prevStatus: StationStatus = StationStatus.undefined;
+  private prevBatterySOC: number = 0;
+
+  constructor(
+    private readonly deyeCloudApi: DeyeCloudApi
+  ) {
+    super();
   }
 
   public getInfo(): string {
-    const formatedTime = format(new TZDate(this.lastUpdateTime * 1000, 'Europe/Kyiv'), 'dd.MM.yyyy HH:mm');
-    return `${this.status === StationStatus.noGrid ? '🔴' : '🟢'} <b>Статус:</b> ${this.status}\n${this.batterySOC > 20 ? `🔋` : `🪫`} <b>Заряд батареї:</b> ${this.batterySOC}%\n⌚ <b>Оновлено:</b> ${formatedTime}`;
+    const formatedTime = formatDateWithTimezone(this.lastUpdateTime);
+    const statusIcon = this.status === StationStatus.undefined ? '⚪' : (this.status === StationStatus.noGrid ? '🔴' : '🟢');
+    return `${statusIcon} <b>Статус:</b> ${this.status}\n${this.batterySOC > 20 ? `🔋` : `🪫`} <b>Заряд батареї:</b> ${this.batterySOC}%\n⌚ <b>Оновлено:</b> ${formatedTime}`;
+  }
+
+  private checkAndEmitEvents(): void {
+    if (this.prevStatus !== StationStatus.undefined && this.status !== this.prevStatus) {
+      console.log(`Event: Status changed from ${this.prevStatus} to ${this.status}`);
+      this.emit('statusChange', this.status);
+    }
+
+    const LOW_BATTERY_THRESHOLD = 20;
+    if (this.prevBatterySOC > LOW_BATTERY_THRESHOLD && this.batterySOC <= LOW_BATTERY_THRESHOLD) {
+      console.log(`Event: Low battery detected (${this.batterySOC}%)`);
+      this.emit('lowBattery', this.batterySOC);
+    }
   }
 
   private updateStation(params: RefreshStationParams): void {
+    this.prevStatus = this.status;
+    this.prevBatterySOC = this.batterySOC;
+
     this.wirePower = params.wirePower ?? 0;
     this.batterySOC = params.batterySOC ?? 0;
     this.lastUpdateTime = params.lastUpdateTime ?? 0;
+
     this.refreshStatus();
+    this.checkAndEmitEvents();
     return;
   }
 
@@ -72,6 +98,3 @@ class Station {
     return;
   }
 }
-
-export default Station;
-
