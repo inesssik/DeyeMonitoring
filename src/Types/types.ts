@@ -13,7 +13,7 @@ export interface ISubscription {
   subscribeId: number;
   clientId: string;
   status: boolean;
-  subscribeType: number;
+  typeId: number;
   subscribeName: string;
 }
 

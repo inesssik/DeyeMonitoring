@@ -15,23 +15,22 @@ export class SubscribeService {
 
   public async getClientSubscribes(clientId: string): Promise<ClientSubscribe[]> {
     const dbUserSubscriptions = await this.databaseService.getUserSubscriptions(clientId);
-
     return dbUserSubscriptions.map(dbSub => new ClientSubscribe({
       clientId,
       status: dbSub.status,
       subscribeId: dbSub.subscribeId,
-      subscribeTypeId: dbSub.subscribeType,
+      subscribeType: dbSub.typeId
     }));
   }
 
-  public async toggleSubscription(clientId: string, typeId: SubscribeType): Promise<boolean> {
+  public async toggleSubscription(clientId: string, subscribeType: SubscribeType): Promise<boolean> {
     const subscriptions = await this.getClientSubscribes(clientId);
-    const targetSubscription = subscriptions.find(s => s.subscribeTypeId === typeId);
+    const targetSubscription = subscriptions.find(s => s.subscribeType === subscribeType);
 
     const currentStatus = targetSubscription ? targetSubscription.status : false;
     const newStatus = !currentStatus;
 
-    await this.databaseService.insertUpdateSubscribe(clientId, typeId, newStatus);
+    await this.databaseService.insertUpdateSubscribe(clientId, subscribeType, newStatus);
 
     return newStatus;
   }
