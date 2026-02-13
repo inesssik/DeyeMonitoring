@@ -1,8 +1,8 @@
 import 'reflect-metadata';
+import { container } from 'tsyringe';
 import { DeyeCloudApiService } from "./Services/DeyeCloudApiService.js";
 import { StationService } from './Services/StationService.js';
 import { NotificationService } from './Services/NotificationService.js';
-import { container } from 'tsyringe';
 import { ConfigService } from './Services/ConfigService.js';
 import { BotService } from './Services/BotService.js';
 import { DatabaseService } from './Services/DatabaseService.js';

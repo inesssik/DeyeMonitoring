@@ -85,9 +85,13 @@ export class StationService extends EventEmitter {
     }
   }
 
-  public initAutoRefreshing(ms: number): Promise<void> {
-    setInterval(() => this.refreshStation(), ms);
-    return;
+  public initAutoRefreshing(ms: number): void {
+    const run = async (): Promise<void> => {
+      await this.refreshStation();
+      setTimeout(run, ms);
+    };
+
+    run();
   }
 
   private refreshStatus(): Promise<void> {
